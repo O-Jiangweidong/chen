@@ -46,18 +46,20 @@ public class SessionWebSocketHandler extends TextWebSocketHandler {
             sess.getDatasource().ping();
             sess.getDatasource().init();
         } catch (Exception e) {
+            log.error("Connect failed, user: {}, url: {}, error: {}",
+                    sess.getUsername(),
+                    sess.getDatasource().getConnectionManager().getJDBCUrl(),
+                    e.getMessage());
+
             dialog.setTitle(MessageUtils.get("msg.dialog.title.init_datasource_failed"));
             dialog.setBodyType("html");
 
             dialog.setBody("""
                     <div style="display: inline-block;text-align: left">
-                        %s<br/>
-                        %s: <span style="color: red">%s</span>
+                        %s
                     </div>
                     """.formatted(
-                    MessageUtils.get("msg.dialog.message.init_datasource_failed"),
-                    MessageUtils.get("msg.dialog.title.error_message"),
-                    e.getMessage()));
+                    MessageUtils.get("msg.dialog.message.init_datasource_failed")));
 
 
             sess.getController().showDialog(dialog);
