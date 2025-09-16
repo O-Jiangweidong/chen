@@ -62,7 +62,16 @@ public class PostgresqlResourceBrowser extends BaseResourceBrowser {
         return this.getSchemas(SQL.of(SQL_GET_SCHEMAS));
     }
 
-    private static final String SQL_GET_TABLES = " SELECT TABLE_NAME AS NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '?' AND TABLE_TYPE = 'BASE TABLE'";
+//    private static final String SQL_GET_TABLES = " SELECT TABLE_NAME AS NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '?' AND TABLE_TYPE = 'BASE TABLE'";
+    private static final String SQL_GET_TABLES =
+            " SELECT t.table_name AS name " +
+                    "FROM information_schema.tables t " +
+                    "WHERE t.table_schema = '?' " +
+                    "AND t.table_type = 'BASE TABLE' " +
+                    "AND NOT EXISTS ( " +
+                    "    SELECT 1 FROM pg_inherits i " +
+                    "    WHERE i.inhrelid = to_regclass(t.table_schema || '.' || t.table_name) " +
+                    ")";
 
     @Override
     public List<Table> getTables(String schema) throws SQLException {

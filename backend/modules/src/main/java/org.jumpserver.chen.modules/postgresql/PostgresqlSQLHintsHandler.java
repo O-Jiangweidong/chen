@@ -22,7 +22,17 @@ public class PostgresqlSQLHintsHandler extends BaseSQLHintsHandler {
     }
 
 
-    private static final String SQL_GET_ALL_TABLES = "SELECT TABLE_NAME AS NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '?'";
+//    private static final String SQL_GET_ALL_TABLES = "SELECT TABLE_NAME AS NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '?'";
+
+    private static final String SQL_GET_ALL_TABLES =
+            "SELECT t.table_name AS name " +
+                    "FROM information_schema.tables t " +
+                    "WHERE t.table_schema = '?' " +
+                    "AND t.table_type = 'BASE TABLE' " +
+                    "AND NOT EXISTS ( " +
+                    "    SELECT 1 FROM pg_inherits i " +
+                    "    WHERE i.inhrelid = to_regclass(t.table_schema || '.' || t.table_name) " +
+                    ")";
 
     public List<Table> getALlTables(String schema) throws SQLException {
         return this.connectionManager.getSqlActuator()
