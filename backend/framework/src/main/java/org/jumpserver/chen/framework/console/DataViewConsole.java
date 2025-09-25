@@ -1,5 +1,6 @@
 package org.jumpserver.chen.framework.console;
 
+import lombok.extern.slf4j.Slf4j;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang3.StringUtils;
 import org.jumpserver.chen.framework.console.action.DataViewAction;
@@ -21,6 +22,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.sql.SQLException;
 import java.util.Map;
 
+@Slf4j
 public class DataViewConsole extends AbstractConsole {
 
     private DataView tableDataView;
@@ -129,6 +131,9 @@ public class DataViewConsole extends AbstractConsole {
             var result = plan.executeWithAudit();
 
             this.getConsoleLogger().success(result);
+            String sqlNoLineBreak = plan.getTargetSQL().replaceAll("[\n\r\t]", " ");
+            sqlNoLineBreak = sqlNoLineBreak.replaceAll("\\s+", " ");
+            log.info("User [{}] executed SQL [{}] on asset [{}], header size: {}, data size: {}", session.getUsername(), sqlNoLineBreak, session.getDatasourceName(), result.getHeaderSize(), result.getDataSize());
             return result;
         });
 

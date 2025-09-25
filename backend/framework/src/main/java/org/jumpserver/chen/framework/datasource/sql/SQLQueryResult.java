@@ -1,5 +1,8 @@
 package org.jumpserver.chen.framework.datasource.sql;
 
+import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import org.jumpserver.chen.framework.utils.HexUtils;
 import com.github.freva.asciitable.AsciiTable;
 import lombok.Data;
 import org.jumpserver.chen.framework.datasource.entity.resource.Field;
@@ -10,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Slf4j
 @Data
 public class SQLQueryResult {
     private String sql;
@@ -27,6 +31,35 @@ public class SQLQueryResult {
 
     private ACLResult aclResult;
 
+    public long getHeaderSize() {
+        long totalBytes = 0;
+        for (Field field : fields) {
+            if (field != null && field.getName() != null) {
+                totalBytes += field.getName().getBytes(StandardCharsets.UTF_8).length;
+            }
+        }
+        return totalBytes;
+    }
+
+    public long getDataSize() {
+        long totalBytes = 0;
+        for (List<Object> row : data) {
+            if (row == null) continue;
+            for (Object value : row) {
+                try {
+                    String valueStr = String.valueOf(value);
+                    if (value instanceof byte[]) {
+                        valueStr = HexUtils.bytesToHex((byte[]) value);
+                    }
+                    totalBytes += valueStr.getBytes(StandardCharsets.UTF_8).length;
+                } catch (Exception e) {
+                    log.error("Compute data size failed: ", e);
+                    return -1;
+                }
+            }
+        }
+        return totalBytes;
+    }
 
     public long getTotalTimeUsed() {
         if (this.hasResultSet) {
