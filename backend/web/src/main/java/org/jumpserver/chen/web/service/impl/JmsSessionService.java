@@ -91,7 +91,11 @@ public class JmsSessionService implements SessionService {
         dbConnectInfo.setDb(tokenResp.getData().getAsset().getSpecific().getDbName());
 
         var platformSettings = tokenResp.getData().getPlatform().getProtocols(0).getSettingsMap();
-//
+
+        if (platformSettings.containsKey("auth_method") && platformSettings.get("auth_method").equals("entra")) {
+            dbConnectInfo.getOptions().put("auth_method", "ActiveDirectoryServicePrincipal");
+        }
+
         if (platformSettings.containsKey("sysdba") && platformSettings.get("sysdba").equals("true")) {
             dbConnectInfo.getOptions().put("internal_logon", "sysdba");
         }

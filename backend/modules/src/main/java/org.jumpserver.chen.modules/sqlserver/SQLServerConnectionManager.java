@@ -65,7 +65,15 @@ public class SQLServerConnectionManager extends BaseConnectionManager {
     @Override
     public void ping() throws SQLException {
         var url = this.getConnectInfo().toJDBCUrl(jdbcUrlTemplate);
-        this.ping(url);
+        Properties props = new Properties();
+        if (this.getConnectInfo().getOptions().containsKey("auth_method")) {
+            props.setProperty("authentication", this.getConnectInfo().getOptions().get("auth_method").toString());
+            props.setProperty("AADSecurePrincipalId", this.getConnectInfo().getUser());
+            if (StringUtils.isNotBlank(this.getConnectInfo().getPassword())) {
+                props.setProperty("AADSecurePrincipalSecret", this.getConnectInfo().getPassword());
+            }
+        }
+        this.ping(url, props);
         this.jdbcUrl = url;
     }
 
