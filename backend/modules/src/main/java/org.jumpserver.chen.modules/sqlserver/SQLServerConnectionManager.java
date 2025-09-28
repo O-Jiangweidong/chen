@@ -1,15 +1,18 @@
 package org.jumpserver.chen.modules.sqlserver;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jumpserver.chen.framework.datasource.Datasource;
 import org.jumpserver.chen.framework.datasource.base.BaseConnectionManager;
 import org.jumpserver.chen.framework.datasource.entity.DBConnectInfo;
 import org.jumpserver.chen.framework.datasource.sql.SQL;
 import org.jumpserver.chen.framework.driver.DriverClassLoader;
+import org.jumpserver.chen.framework.ssl.JKSGenerator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Driver;
 import java.sql.SQLException;
+import java.util.Properties;
 
 @Slf4j
 public class SQLServerConnectionManager extends BaseConnectionManager {
@@ -64,6 +67,32 @@ public class SQLServerConnectionManager extends BaseConnectionManager {
         var url = this.getConnectInfo().toJDBCUrl(jdbcUrlTemplate);
         this.ping(url);
         this.jdbcUrl = url;
+    }
+
+    protected void setSSLProps(Properties props) {
+        if (this.getConnectInfo().getOptions().get("useSSL") != null
+                && (boolean) this.getConnectInfo().getOptions().get("useSSL")) {
+            props.setProperty("encrypt", "true");
+            props.setProperty("trustServerCertificate", "true");
+            var jksGenerator = new JKSGenerator();
+            if ((boolean) this.getConnectInfo().getOptions().get("verifyServerCertificate")) {
+                props.setProperty("trustServerCertificate", "false");
+                jksGenerator.setCaCert((String) this.getConnectInfo().getOptions().get("caCert"));
+
+                var caCertPath = jksGenerator.generateCaJKS();
+                props.setProperty("trustCertificateKeyStoreUrl", "file:" + caCertPath);
+                props.setProperty("trustCertificateKeyStorePassword", JKSGenerator.JSK_PASS);
+
+            }
+            if (StringUtils.isNotBlank((String) this.getConnectInfo().getOptions().get("clientCert"))) {
+                jksGenerator.setClientCert((String) this.getConnectInfo().getOptions().get("clientCert"));
+                jksGenerator.setClientKey((String) this.getConnectInfo().getOptions().get("clientKey"));
+                var clientCertPath = jksGenerator.generateClientJKS();
+                props.setProperty("clientKey", "file:" + clientCertPath);
+                props.setProperty("clientKeyPassword", JKSGenerator.JSK_PASS);
+
+            }
+        }
     }
 
 

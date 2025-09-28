@@ -2,6 +2,7 @@ package org.jumpserver.chen.framework.console.component;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jumpserver.chen.framework.datasource.sql.SQLQueryResult;
+import org.jumpserver.chen.framework.session.Session;
 import org.jumpserver.chen.framework.ws.io.Packet;
 import org.jumpserver.chen.framework.console.entity.response.Log;
 import org.jumpserver.chen.framework.ws.io.PacketIO;
@@ -27,7 +28,11 @@ public class Logger {
         this.packetIO.sendPacket(Packet.TYPE_LOG, logMsg);
     }
 
-    public void success(SQLQueryResult result) {
+    public void success(SQLQueryResult result, Session session) {
+        String sqlNoLineBreak = result.getSql().replaceAll("[\n\r\t]", " ");
+        sqlNoLineBreak = sqlNoLineBreak.replaceAll("\\s+", " ");
+        log.info("User [{}] executed SQL [{}] on asset [{}], header size: {}, data size: {}", session.getUsername(), sqlNoLineBreak, session.getDatasourceName(), result.getHeaderSize(), result.getDataSize());
+
         if (result.isHasResultSet()) {
             this.success("%d rows retrieved  in %d ms (execution: %d ms, fetching: %d ms)",
                     result.getData().size(),

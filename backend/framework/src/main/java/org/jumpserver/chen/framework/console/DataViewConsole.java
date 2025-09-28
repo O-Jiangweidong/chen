@@ -130,10 +130,7 @@ public class DataViewConsole extends AbstractConsole {
             this.getConsoleLogger().info("execute sql: %s", plan.getTargetSQL());
             var result = plan.executeWithAudit();
 
-            this.getConsoleLogger().success(result);
-            String sqlNoLineBreak = plan.getTargetSQL().replaceAll("[\n\r\t]", " ");
-            sqlNoLineBreak = sqlNoLineBreak.replaceAll("\\s+", " ");
-            log.info("User [{}] executed SQL [{}] on asset [{}], header size: {}, data size: {}", session.getUsername(), sqlNoLineBreak, session.getDatasourceName(), result.getHeaderSize(), result.getDataSize());
+            this.getConsoleLogger().success(result, session);
             return result;
         });
 

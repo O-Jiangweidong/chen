@@ -1,11 +1,14 @@
 package org.jumpserver.chen.modules.postgresql;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jumpserver.chen.framework.datasource.Datasource;
 import org.jumpserver.chen.framework.datasource.base.BaseConnectionManager;
 import org.jumpserver.chen.framework.datasource.entity.DBConnectInfo;
 import org.jumpserver.chen.framework.datasource.sql.SQL;
+import org.jumpserver.chen.modules.base.ssl.SSLCertManager;
 
 import java.sql.SQLException;
+import java.util.Properties;
 
 public class PostgresqlConnectionManager extends BaseConnectionManager {
 
@@ -28,6 +31,46 @@ public class PostgresqlConnectionManager extends BaseConnectionManager {
         var url = this.getConnectInfo().toJDBCUrl(jdbcUrlTemplate);
         this.ping(url);
         this.jdbcUrl = url;
+    }
+
+    protected void setSSLProps(Properties props) {
+        if (this.getConnectInfo().getOptions().get("useSSL") != null
+                && (boolean) this.getConnectInfo().getOptions().get("useSSL")) {
+
+            var caCert = (String) this.getConnectInfo().getOptions().get("caCert");
+            var clientCert = (String) this.getConnectInfo().getOptions().get("clientCert");
+            var clientKey = (String) this.getConnectInfo().getOptions().get("clientKey");
+            var sslMode = (String) this.getConnectInfo().getOptions().get("pgSSLMode");
+
+            var sslManager = new SSLCertManager();
+            sslManager.setCaCert(caCert);
+            sslManager.setClientCert(clientCert);
+            sslManager.setClientCertKey(clientKey);
+
+
+            try {
+                var sslCaCertPath = sslManager.getCaCertPath();
+                var sslClientCertPath = sslManager.getClientCertPath();
+                var sslClientCertKeyPath = sslManager.getClientCertKeyPath();
+
+                props.setProperty("ssl", "true");
+                props.setProperty("sslmode", sslMode);
+
+                if (StringUtils.isNotEmpty(sslCaCertPath)) {
+                    props.setProperty("sslrootcert", sslManager.getCaCertPath());
+                }
+
+                if (StringUtils.isNotEmpty(sslClientCertPath)) {
+                    props.setProperty("sslcert", sslManager.getClientCertPath());
+                }
+
+                if (StringUtils.isNotEmpty(sslClientCertKeyPath)) {
+                    props.setProperty("sslkey", sslManager.getClientCertKeyPath());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static final String SQL_GET_VERSION = "SELECT version()";

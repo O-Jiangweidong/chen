@@ -356,7 +356,8 @@ public class QueryConsole extends AbstractConsole {
             var result = plan.executeWithAudit();
             this.currentPlan = null;
 
-            this.getConsoleLogger().success(result);
+            var session = SessionManager.getCurrentSession();
+            this.getConsoleLogger().success(result, session);
             return result;
         });
 
